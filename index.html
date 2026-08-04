@@ -247,7 +247,7 @@
    Data:   saved to localStorage; export/import as JSON.
    ===================================================================== */
 
-const LS_KEY = "irt-state-v1";
+const LS_KEY = "irt-state-v2";
 const uid = () => Math.random().toString(36).slice(2, 10);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmtDate = ts => ts ? new Date(ts).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}) : "";
@@ -256,86 +256,118 @@ const daysAgo = n => Date.now() - n*864e5;
 const FREQUENCIES = ["Monthly","Quarterly","Semi-annual","Annual"];
 const AVATAR_COLORS = ["#2273C8","#7C4DBE","#C2557C","#1F8A70","#B87E14","#5B6B7C","#C4663D","#3D7CA5"];
 
-/* ---------------- Seed data (sample — everything is editable) ---------------- */
+/* ---------------- Seed data — loaded from the 2026 Investor Reporting Tracker
+   and "Investor Reporting - Workflows" spreadsheets (Aug 2026). Everything
+   remains editable in the app. ---------------- */
 function seedState(){
-  const u = (name, role, i) => ({id:uid(), name, role, color:AVATAR_COLORS[i % AVATAR_COLORS.length]});
-  const west  = u("West","Controller",0);
-  const alex  = u("Alex","Property Accountant",1);
-  const sam   = u("Sam","Senior Accountant",2);
-  const jordan= u("Jordan","Asset Manager",3);
-  const users = [west, alex, sam, jordan];
+  const NAMES = [
+    ["West","Controller"],["Andrea","Operations"],["Kim","Accountant"],["Amy","Accountant"],
+    ["Josh","Accountant"],["Standish","Accountant"],["Angelito","Accountant"],["Emily","Accountant"],
+    ["Will","Development Manager"],["Tanner","Development / DPM"],["Patrick","Development / DPM"],
+    ["Mandana","Asset Manager"],["Spencer","Asset Manager"],["Rick","Asset Manager"],
+    ["Accounting Manager","Role — rename to a person"],["VP of Investments","Role — rename to a person"],
+    ["VP of Development","Role — rename to a person"],
+  ];
+  const users = NAMES.map((n,i)=>({id:uid(), name:n[0], role:n[1], color:AVATAR_COLORS[i % AVATAR_COLORS.length]}));
+  const U = Object.fromEntries(users.map(u=>[u.name, u.id]));
 
-  const st = name => ({id:uid(), name});
+  const st = n => ({id:uid(), name:n});
+  const FIN_STEPS = ["Prepare","Review – Accounting","Review – Asset Mgmt","Approve","Send to investors"];
+  const DEV_STEPS = ["Prepare","Review – Development","Review – Asset Mgmt","Approve","Send to investors"];
   const reportTypes = [
-    {id:uid(), name:"Quarterly Financial Package", frequency:"Quarterly",
-     steps:[st("Prepare financials"), st("Internal review"), st("Draft investor report"), st("Final review"), st("Distribute to investors")]},
-    {id:uid(), name:"Monthly Property Report", frequency:"Monthly",
-     steps:[st("Collect property data"), st("Prepare report"), st("Review"), st("Send to investors")]},
-    {id:uid(), name:"Annual Audit", frequency:"Annual",
-     steps:[st("PBC list prep"), st("Auditor fieldwork"), st("Review draft"), st("Final financials"), st("Distribute")]},
-    {id:uid(), name:"Tax Package / K-1s", frequency:"Annual",
-     steps:[st("Gather tax info"), st("CPA preparation"), st("Review K-1s"), st("Distribute K-1s")]},
-    {id:uid(), name:"Distribution Notice", frequency:"Quarterly",
-     steps:[st("Calculate distribution"), st("Approval"), st("Notice to investors"), st("Fund distribution")]},
+    {id:uid(), name:"Financial",   frequency:"Quarterly", steps:FIN_STEPS.map(st)},
+    {id:uid(), name:"Development", frequency:"Monthly",   steps:DEV_STEPS.map(st)},
+    {id:uid(), name:"Letter",      frequency:"Annual",    steps:FIN_STEPS.map(st)},
   ];
-  const [qfp, mpr, audit, tax, dist] = reportTypes;
+  const T = Object.fromEntries(reportTypes.map(t=>[t.name, t]));
 
-  const assignFor = (rt, map) => ({
-    id:uid(), reportTypeId:rt.id, frequency:rt.frequency,
-    stepAssignees:Object.fromEntries(rt.steps.map((s,i)=>[s.id, map[i].id]))
-  });
-
-  const entities = [
-    {id:uid(), name:"Demo Fund I, LLC", assignments:[
-      assignFor(qfp,[alex,sam,sam,west,west]),
-      assignFor(dist,[sam,west,alex,west]),
-      assignFor(audit,[alex,sam,west,west,west]),
-    ]},
-    {id:uid(), name:"Demo Property II, LLC", assignments:[
-      assignFor(mpr,[alex,alex,sam,alex]),
-      assignFor(tax,[alex,sam,west,alex]),
-    ]},
-    {id:uid(), name:"Demo JV III, LLC", assignments:[
-      assignFor(qfp,[sam,west,sam,west,jordan]),
-    ]},
+  // [entity, type, recipient, frequency, accountant, responsible, sender, note, seedPeriod, stepsDone]
+  // seedPeriod/stepsDone reflect the tracker's status grid as of early Aug 2026 (o/x/X legend).
+  const ROWS = [
+    ["AAB","Development","PR Team","Monthly","Kim","Will","Josh","",null,0],
+    ["Adler Benchmark (514)","Development","JV Partner (DWT – Brighton)","Monthly","West","Tanner","Andrea","Expected end date: Q4 2026 (add financials) – Robert and Amanda","Jul 2026",0],
+    ["Adler M142","Development","JV Partners (3M & SANDT)","Monthly","Amy","Tanner","Andrea","","Jul 2026",0],
+    ["Airport 131","Development","JV Partners (SIM)","Monthly","West","Patrick","Andrea","Will to continue until A131 fully leased","Jul 2026",0],
+    ["La Vista T101 & T102","Development","JV Partners (BV)","Monthly","West","Tanner","Andrea","","Jul 2026",0],
+    ["Midland","Development","PR Team","Monthly","Amy","Will","Josh","","Jul 2026",0],
+    ["Ten Mile Crossing (TMX)","Development","JV Partner (Brighton/SCS)","Monthly","Josh","Tanner","Andrea","Expected end date: Q4 2026 – Mike Hall & April Bull, Robert Phillips, Amanda, Jocelyn Davis","Jul 2026",0],
+    ["JBJW (Upson) Roofing","Development","JBJW Ownership","Monthly","","Tanner","Tanner","","Jul 2026",0],
+    ["Adler Fresno","Development","Adler Investors","Quarterly","West","Will","Andrea","","Q2 2026",5],
+    ["Adler M142 (RME)","Development","Adler Inv. and JV (3M and Sandt)","Quarterly","Amy","Tanner","Andrea","","Q2 2026",5],
+    ["Adler Port","Development","Adlers","Quarterly","","Tanner","Andrea","Include financials","Q2 2026",5],
+    ["Boise Airport Industrial Holdings, LLC","Development","JV Partners (BV/SIM)","Quarterly","Josh","Patrick","Andrea","Send M. Broadfoot / Preston Parker / Justin Pearson financials from Josh","Q2 2026",2],
+    ["Boise Airport Industrial Holdings, LLC","Development","Airport (Mardi Mendenhall)","Quarterly","Josh","Patrick","Tanner","","Q2 2026",0],
+    ["La Vista T101 & T102","Development","Adler Investors","Quarterly","West","Tanner","Andrea","TBD – adding AM supplement?","Q2 2026",5],
+    ["Ten Mile Crossing (TMX)","Development","Adler Inv. and JV (Brighton/SCS)","Quarterly","Josh","Tanner","Andrea","Q4 '26 – Will's final / Mandana's first, depends on leasing","Q2 2026",5],
+    ["AAB","Financial","PR Team","Monthly","Kim","Mandana","Josh","","Jul 2026",0],
+    ["BIH","Financial","TPG Team","Monthly","Amy","Mandana","Josh","","Jul 2026",0],
+    ["Fairview Plaza Seven, LLC","Financial","FPS Team","Monthly","Amy","Mandana","West","","Jul 2026",0],
+    ["KW Fund VI – Adler Portfolio, LLC","Financial","KW Team","Monthly","Kim","Mandana","Josh","","Jul 2026",0],
+    ["Midland","Financial","PR Team","Monthly","Amy","Mandana","Josh","Reports Mar–Jun only",null,0],
+    ["Warner Center","Financial","LLJ","Monthly","Standish","Spencer","Andrea","Tommy, Leo, Flavio, Eduardo Podosky",null,0],
+    ["20944 Vanowen Apartments","Financial","Adler Investors","Quarterly","Josh","Rick","Andrea","Responsible: Rick/Spencer","Q2 2026",3],
+    ["Adler AB Owner XVII (AVA301)","Financial","Adler Inv. and JV (Van Auker)","Quarterly","Standish","Mandana","Andrea","","Q2 2026",3],
+    ["Adler AB Owner XXI (AVA512)","Financial","Adler Investors","Quarterly","Standish","Mandana","Andrea","","Q2 2026",3],
+    ["Adler Benchmark (514)","Financial","Adler Investors","Quarterly","West","Mandana","Andrea","CMYK signed in April – assumed stabilized for 2Q; Will to add commentary","Q2 2026",3],
+    ["Adler VA Industrial","Financial","Adler Investors","Quarterly","Kim","Mandana","Andrea","Will in lead","Q2 2026",3],
+    ["Airport 121-122","Financial","Adler Inv. and JV Partners (BV/SIM)","Quarterly","Standish","Mandana","Andrea","","Q2 2026",3],
+    ["Airport 133","Financial","Adler Investors","Quarterly","West","Mandana","Andrea","Mention 131 leasing","Q2 2026",3],
+    ["Airport 134","Financial","Adler Investors","Quarterly","West","Mandana","Andrea","","Q2 2026",3],
+    ["ARI Nampa","Financial","Adler Investors","Quarterly","Angelito","Mandana","Andrea","","Q2 2026",3],
+    ["Bayou Retail","Financial","Adler Investors","Quarterly","Standish","Spencer","Andrea","","Q2 2026",3],
+    ["Danari Calabasas","Financial","Adler Investors","Quarterly","Standish","Spencer","Andrea","","Q2 2026",3],
+    ["Danari Columbia","Financial","Adler Investors","Quarterly","Angelito","Spencer","Andrea","","Q2 2026",3],
+    ["Danari Gowen","Financial","Adler Investors","Quarterly","Standish","Mandana","Andrea","Responsible: MTT/SE","Q2 2026",3],
+    ["Danari Muncie","Financial","Adler Investors","Quarterly","Standish","Mandana","Andrea","Responsible: MTT/SE","Q2 2026",3],
+    ["Danari Skyport","Financial","Adler Investors","Quarterly","Standish","Mandana","Andrea","","Q2 2026",3],
+    ["Danari Taylor","Financial","Adler Investors","Quarterly","Kim","Mandana","Andrea","","Q2 2026",3],
+    ["Danari Vernon","Financial","Adler Investors","Quarterly","Kim","Spencer","Andrea","","Q2 2026",3],
+    ["JT Midland","Financial","Adler Inv. and JV (Van Auker)","Quarterly","Kim","Mandana","Andrea","","Q2 2026",3],
+    ["Midland Holdings","Financial","Adler Investors","Quarterly","Emily","Will","Andrea","Spencer assists","Q2 2026",3],
+    ["Trux – Nampa Parking","Financial","Adler Investors","Quarterly","","","Andrea","Using Trux monthly report (Joey Goodman)","Q2 2026",3],
+    ["Warner Center","Financial","Adler Investors","Quarterly","Standish","Spencer","Andrea","","Q2 2026",2],
+    ["Pleasant Valley","Financial","JV Partners (BV)","Quarterly","Amy","Josh","Andrea","See Dev Report. Send M. Broadfoot / Preston Parker / Justin Pearson financials from Josh","Q2 2026",3],
+    ["Adler Farm","Letter","Adlers","Annual","","Patrick","Andrea","","FY 2025",5],
+    ["Adler McDermott","Letter","Adler Investors","Annual","Kim","Mandana","Andrea","Switch to Will / Quarterly when work starts","FY 2025",5],
+    ["AI Cherry, LLC","Letter","Adler Investors","Annual","Kim","Mandana","Andrea","","FY 2025",5],
+    ["AP Northside LLC / Adler Northside","Letter","JV (Palfreyman) and Adlers","Annual","Amy","Patrick","Andrea","","FY 2025",5],
+    ["Danari Solar – Calabasas","Letter","Adler Investors","Annual","Kim","Mandana","Andrea","","FY 2025",5],
+    ["Adler IF100 and IF101","Letter","Adler Investors","Quarterly","","Patrick","Andrea","","Q2 2026",1],
+    ["Pleasant Valley","Letter","Adler Investors","Quarterly","Josh","Patrick","Andrea","","Q2 2026",0],
+    ["Ten Mile West","Letter","Adler Investors","Quarterly","West","Will","Andrea","","Q1 2026",3],
   ];
-  const [fund1, prop2, jv3] = entities;
 
-  // Snapshot a run from an assignment; completedThrough = # of steps already done
-  function mkRun(entity, a, period, completedThrough, dueTs){
-    const rt = reportTypes.find(r=>r.id===a.reportTypeId);
-    const steps = rt.steps.map((s,i)=>({
-      name:s.name, assigneeId:a.stepAssignees[s.id] || null,
-      status: i<completedThrough ? "done" : (i===completedThrough ? "current":"todo"),
-      completedAt: i<completedThrough ? daysAgo((completedThrough-i)*4+2) : null,
-      completedBy: i<completedThrough ? (a.stepAssignees[s.id]||null) : null,
-    }));
-    const done = completedThrough >= steps.length;
-    return {id:uid(), entityId:entity.id, reportTypeId:rt.id, reportTypeName:rt.name, period,
-      dueDate:dueTs||null, createdAt:daysAgo(30), status:done?"done":"active",
-      steps, history:[{ts:daysAgo(30), text:"Report run created"}]};
+  const entities = [], runs = [], entByName = {};
+  for (const [ent, type, rcp, freq, acct, resp, sender, note, period, through] of ROWS){
+    const rt = T[type];
+    let e = entByName[ent];
+    if (!e){ e = {id:uid(), name:ent, assignments:[]}; entByName[ent] = e; entities.push(e); }
+    const s = rt.steps;
+    const isDev = type === "Development";
+    const stepAssignees = {
+      [s[0].id]: isDev ? (U[resp]||null) : (U[acct]||null),
+      [s[1].id]: isDev ? U["VP of Development"] : U["Accounting Manager"],
+      [s[2].id]: isDev ? null : (U[resp]||null),
+      [s[3].id]: U["VP of Investments"],
+      [s[4].id]: U[sender]||null,
+    };
+    const fullNote = (isDev && acct ? `Financials: ${acct}. ` : "") + (note||"");
+    const a = {id:uid(), reportTypeId:rt.id, frequency:freq, recipient:rcp, note:fullNote, stepAssignees};
+    e.assignments.push(a);
+    if (period){
+      const steps = rt.steps.map((sd,i)=>({
+        name:sd.name, assigneeId:stepAssignees[sd.id]||null,
+        status: i<through ? "done" : (i===through ? "current" : "todo"),
+        completedAt: i<through ? daysAgo((through-i)*5+3) : null,
+        completedBy: i<through ? (stepAssignees[sd.id]||null) : null,
+      }));
+      const done = through >= steps.length;
+      runs.push({id:uid(), entityId:e.id, reportTypeId:rt.id, reportTypeName:rt.name,
+        recipient:rcp, assignmentId:a.id, period, dueDate:null, createdAt:daysAgo(25),
+        status:done?"done":"active", steps, history:[{ts:daysAgo(25), text:"Report run created from 2026 tracker"}]});
+    }
   }
-
-  const runs = [
-    mkRun(fund1, fund1.assignments[0], "Q2 2026", 3, daysAgo(-10)),          // at Final review (West)
-    mkRun(fund1, fund1.assignments[1], "Q2 2026", 1, daysAgo(2)),            // overdue at Approval (West)
-    mkRun(fund1, fund1.assignments[2], "FY 2025", 5, null),                  // audit complete
-    mkRun(prop2, prop2.assignments[0], "Jul 2026", 0, daysAgo(-6)),          // monthly not started (Alex)
-    mkRun(prop2, prop2.assignments[1], "FY 2025", 4, null),                  // K-1s complete
-    mkRun(jv3,   jv3.assignments[0],   "Q2 2026", 1, daysAgo(-14)),          // at Internal review (West)
-    mkRun(fund1, fund1.assignments[0], "Q1 2026", 5, null),                  // Q1 package complete
-  ];
-
-  const notifications = [
-    {id:uid(), userId:west.id, runId:runs[0].id, read:false, ts:daysAgo(1),
-     text:"Demo Fund I · Quarterly Financial Package (Q2 2026): “Final review” is ready for you."},
-    {id:uid(), userId:west.id, runId:runs[1].id, read:false, ts:daysAgo(3),
-     text:"Demo Fund I · Distribution Notice (Q2 2026): “Approval” is ready for you."},
-    {id:uid(), userId:west.id, runId:runs[5].id, read:true, ts:daysAgo(5),
-     text:"Demo JV III · Quarterly Financial Package (Q2 2026): “Internal review” is ready for you."},
-  ];
-
-  return {users, reportTypes, entities, runs, notifications, activeUserId:west.id};
+  return {users, reportTypes, entities, runs, notifications:[], activeUserId:U["West"]};
 }
 
 /* ---------------- State ---------------- */
@@ -457,11 +489,17 @@ const actions = {
   addAssignment(el){
     const e = entityById(el.dataset.entity); if(!e || !el.value) return;
     const rt = typeById(el.value); el.value="";
-    if (e.assignments.some(a=>a.reportTypeId===rt.id)) return toast(`${e.name} already has ${rt.name}`);
-    const firstUser = state.users[0];
-    e.assignments.push({id:uid(), reportTypeId:rt.id, frequency:rt.frequency,
-      stepAssignees:Object.fromEntries(rt.steps.map(s=>[s.id, firstUser?firstUser.id:null]))});
-    save(); render(); toast(`${rt.name} assigned — set who owns each step`);
+    e.assignments.push({id:uid(), reportTypeId:rt.id, frequency:rt.frequency, recipient:"", note:"",
+      stepAssignees:Object.fromEntries(rt.steps.map(s=>[s.id, null]))});
+    save(); render(); toast(`${rt.name} assigned — set the recipient and step owners`);
+  },
+  setRecipient(el){
+    const e = entityById(el.dataset.entity); const a = e && e.assignments.find(x=>x.id===el.dataset.assign);
+    if(a){ a.recipient = el.value.trim(); save(); }
+  },
+  setAssignNote(el){
+    const e = entityById(el.dataset.entity); const a = e && e.assignments.find(x=>x.id===el.dataset.assign);
+    if(a){ a.note = el.value.trim(); save(); }
   },
   removeAssignment(el){
     const e = entityById(el.dataset.entity); if(!e) return;
@@ -484,14 +522,15 @@ const actions = {
     if(!a) return;
     const sel = document.querySelector(`select[data-period-for="${a.id}"]`);
     const period = sel && sel.value.replace(/ ✓$/,""); if(!period) return toast("Pick a period");
-    if (state.runs.some(r=>r.entityId===e.id && r.reportTypeId===a.reportTypeId && r.period===period))
+    if (state.runs.some(r=>(r.assignmentId ? r.assignmentId===a.id : (r.entityId===e.id && r.reportTypeId===a.reportTypeId)) && r.period===period))
       return toast(`A ${period} run already exists for this report`);
     const dueInp = document.querySelector(`input[data-due-for="${a.id}"]`);
     const dueDate = dueInp && dueInp.value ? new Date(dueInp.value+"T12:00:00").getTime() : null;
     const rt = typeById(a.reportTypeId);
     const steps = rt.steps.map((s,i)=>({name:s.name, assigneeId:a.stepAssignees[s.id]||null,
       status:i===0?"current":"todo", completedAt:null, completedBy:null}));
-    const run = {id:uid(), entityId:e.id, reportTypeId:rt.id, reportTypeName:rt.name, period,
+    const run = {id:uid(), entityId:e.id, reportTypeId:rt.id, reportTypeName:rt.name,
+      recipient:a.recipient||"", assignmentId:a.id, period,
       dueDate, createdAt:Date.now(), status:"active", steps,
       history:[{ts:Date.now(), text:`Report run created by ${activeUser().name}`}]};
     state.runs.unshift(run);
@@ -694,7 +733,8 @@ function dashboardHtml(){
   const q = filters.q.trim().toLowerCase();
   if(q) rows = rows.filter(r=>{
     const e=entityById(r.entityId);
-    return (e&&e.name.toLowerCase().includes(q)) || r.reportTypeName.toLowerCase().includes(q) || r.period.toLowerCase().includes(q);
+    return (e&&e.name.toLowerCase().includes(q)) || r.reportTypeName.toLowerCase().includes(q)
+      || r.period.toLowerCase().includes(q) || (r.recipient||"").toLowerCase().includes(q);
   });
   if(filters.type!=="all") rows = rows.filter(r=>r.reportTypeId===filters.type);
   if(filters.status!=="all") rows = rows.filter(r=>{
@@ -737,7 +777,7 @@ function dashboardHtml(){
         const e=entityById(r.entityId); const cs=currentStep(r);
         const cur = r.steps.findIndex(s=>s.status==="current");
         return `<tr data-action="openRun" data-run="${r.id}">
-          <td><div class="ent-name">${e?esc(e.name):"?"}</div><div class="rt-name">${esc(r.reportTypeName)}</div></td>
+          <td><div class="ent-name">${e?esc(e.name):"?"}</div><div class="rt-name">${esc(r.reportTypeName)}${r.recipient?` · ${esc(r.recipient)}`:""}</div></td>
           <td class="num">${esc(r.period)}</td>
           <td>${pipeHtml(r)}<div class="pipe-caption">${
             r.status==="done" ? `All ${r.steps.length} steps complete`
@@ -803,19 +843,23 @@ function entitiesHtml(){
           <span class="grow"></span>
           <select data-change="addAssignment" data-entity="${e.id}">
             <option value="">+ Assign report type…</option>
-            ${state.reportTypes.filter(t=>!e.assignments.some(a=>a.reportTypeId===t.id))
-              .map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join("")}
+            ${state.reportTypes.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join("")}
           </select>
           <button class="btn small danger" data-action="deleteEntity" data-entity="${e.id}">Delete</button>
         </div>
         ${e.assignments.length ? e.assignments.map(a=>{
           const rt = typeById(a.reportTypeId); if(!rt) return "";
-          const ran = new Set(state.runs.filter(r=>r.entityId===e.id && r.reportTypeId===a.reportTypeId).map(r=>r.period));
+          const ran = new Set(state.runs.filter(r=>r.assignmentId ? r.assignmentId===a.id : (r.entityId===e.id && r.reportTypeId===a.reportTypeId)).map(r=>r.period));
           const opts = periodOptions(a.frequency);
           const next = opts.find(p=>!ran.has(p));
           return `<div class="divider"></div>
           <div class="inline-row" style="justify-content:space-between">
-            <strong>${esc(rt.name)}</strong>
+            <span class="inline-row">
+              <strong>${esc(rt.name)}</strong>
+              <span class="muted">→</span>
+              <input value="${esc(a.recipient||"")}" placeholder="Recipient (who gets this report)" style="min-width:210px"
+                data-change="setRecipient" data-entity="${e.id}" data-assign="${a.id}" aria-label="Recipient">
+            </span>
             <span class="inline-row">
               <label class="muted" style="font-size:12px">Frequency
                 <select data-change="setAssignFreq" data-entity="${e.id}" data-assign="${a.id}">
@@ -837,7 +881,9 @@ function entitiesHtml(){
                 <option value="">— unassigned —</option>
                 ${state.users.map(u=>`<option value="${u.id}" ${a.stepAssignees[s.id]===u.id?"selected":""}>${esc(u.name)}</option>`).join("")}
               </select>`).join("")}
-          </div>`;
+          </div>
+          <input value="${esc(a.note||"")}" placeholder="Notes for this report (optional)" style="width:100%; font-size:12.5px"
+            data-change="setAssignNote" data-entity="${e.id}" data-assign="${a.id}" aria-label="Assignment notes">`;
         }).join("") : `<p class="muted" style="margin:4px 0 0">No report types assigned yet.</p>`}
       </div>`).join("")}
   </div>`;
@@ -917,7 +963,7 @@ function runSheetHtml(){
   return `<div class="overlay" data-action="closeSheet">
     <div class="sheet" data-stop="1" role="dialog" aria-label="Report run details">
       <div class="sheet-head">
-        <h3>${e?esc(e.name):"?"}<br><span class="muted" style="font-weight:600; font-size:13.5px">${esc(r.reportTypeName)} · ${esc(r.period)}</span></h3>
+        <h3>${e?esc(e.name):"?"}<br><span class="muted" style="font-weight:600; font-size:13.5px">${esc(r.reportTypeName)}${r.recipient?` → ${esc(r.recipient)}`:""} · ${esc(r.period)}</span></h3>
         <button class="close-x" data-action="closeSheet" aria-label="Close">✕</button>
       </div>
       <div class="inline-row" style="margin:6px 0 4px">
