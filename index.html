@@ -279,7 +279,7 @@
    Data:   saved to localStorage; export/import as JSON.
    ===================================================================== */
 
-const LS_KEY = "irt-state-v2";
+const LS_KEY = "irt-state-v3";   // v3: real people per role from the tracker's Users tab
 const LOGO_DARK = "data:image/png;base64,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";
 const LOGO_LIGHT = "data:image/png;base64,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";
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -304,15 +304,15 @@ const AVATAR_COLORS = ["#2273C8","#7C4DBE","#C2557C","#1F8A70","#B87E14","#5B6B7
    and "Investor Reporting - Workflows" spreadsheets (Aug 2026). Everything
    remains editable in the app. ---------------- */
 function seedState(){
+  // Team — names and job roles from the tracker's "Users" tab.
   // [name, job role, access level, is a role placeholder rather than a person]
   const NAMES = [
-    ["West","Controller","admin"],["Andrea","Operations Manager","admin"],
-    ["Kim","Accountant"],["Amy","Accountant"],["Josh","Accountant"],["Standish","Accountant"],
-    ["Angelito","Accountant"],["Emily","Accountant"],
+    ["Westley Oxier","Accounting Manager","admin"],["Andrea Myers","Operations Manager","admin"],
+    ["Amy Willis","Accountant"],["Emily Nowoy","Accountant"],["Kim Smart","Accountant"],["Standish","Accountant"],
+    ["Josh Elliott","Controller"],
+    ["Mandana Tarr","DPM"],["Humberto Arechiga","Asset Manager"],
+    ["Spencer Esau","VP of Investments"],
     ["Will","Development Manager"],["Tanner","Development Manager"],["Patrick","Development Manager"],
-    ["Mandana","Asset Manager"],["Spencer","Asset Manager"],["Rick","Asset Manager"],
-    ["Accounting Manager","Accounting Manager","member",true],
-    ["VP of Investments","VP of Investments","member",true],
     ["VP of Development","VP of Development","member",true],
   ];
   const users = NAMES.map((n,i)=>({
@@ -320,6 +320,32 @@ function seedState(){
     pin:pinHash(DEFAULT_PIN), color:AVATAR_COLORS[i % AVATAR_COLORS.length],
   }));
   const U = Object.fromEntries(users.map(u=>[u.name, u.id]));
+
+  /* Per-entity role assignments from the "Users" tab:
+     [Accountant, Accounting Manager *or* Controller, Asset Manager *or* DPM].
+     VP of Investments is Spencer Esau and Operations Manager is Andrea Myers on every row. */
+  const key = s => String(s).toLowerCase().replace(/[–—]/g,"-").replace(/\s+/g," ").trim();
+  const AW="Amy Willis", EN="Emily Nowoy", KS="Kim Smart", SD="Standish", AM="Andrea Myers";
+  const JE="Josh Elliott", WO="Westley Oxier", MT="Mandana Tarr", HA="Humberto Arechiga";
+  const ROLE_ROWS = [
+    ["Adler Benchmark (514)",AW,JE,MT],["Airport 131",AW,JE,MT],["La Vista T101 & T102",AW,JE,MT],
+    ["JBJW (Upson) Roofing",AW,JE,MT],["Adler Fresno",AW,JE,MT],["Adler M142 (RME)",AW,JE,MT],
+    ["Adler Port",AW,JE,MT],["Ten Mile Crossing (TMX)",AW,JE,MT],["Adler IF100 and IF101",AW,JE,MT],
+    ["Pleasant Valley",AW,JE,MT],["Adler M142",AW,JE,MT],["BIH",AW,WO,MT],
+    ["Trux - Nampa Parking",AM,AM,AM],
+    ["20944 Vanowen Apartments",EN,JE,HA],["Adler Farm",EN,JE,MT],["AAB",EN,WO,MT],["Midland",EN,WO,MT],
+    ["Boise Airport Industrial Holdings, LLC",EN,WO,MT],["Fairview Plaza Seven, LLC",EN,WO,MT],
+    ["Adler VA Industrial",EN,WO,MT],["Airport 121-122",EN,WO,MT],["Airport 133",EN,WO,MT],
+    ["Airport 134",EN,WO,MT],["Midland Holdings",EN,WO,MT],["AP Northside LLC / Adler Northside",EN,WO,MT],
+    ["Ten Mile West",EN,WO,MT],
+    ["KW Fund VI - Adler Portfolio, LLC",KS,WO,MT],["ARI Nampa",KS,WO,MT],["Danari Columbia",KS,WO,HA],
+    ["Danari Taylor",KS,WO,HA],["Danari Vernon",KS,WO,HA],["JT Midland",KS,WO,MT],
+    ["Adler McDermott",KS,WO,MT],["AI Cherry, LLC",KS,WO,MT],["Danari Solar - Calabasas",KS,WO,MT],
+    ["Warner Center",SD,JE,HA],["Adler AB Owner XVII (AVA301)",SD,WO,MT],
+    ["Adler AB Owner XXI (AVA512)",SD,WO,MT],["Bayou Retail",SD,WO,HA],["Danari Calabasas",SD,WO,HA],
+    ["Danari Gowen",SD,WO,HA],["Danari Muncie",SD,WO,HA],["Danari Skyport",SD,WO,HA],
+  ];
+  const ROLES = Object.fromEntries(ROLE_ROWS.map(r=>[key(r[0]), {acct:r[1], review:r[2], asset:r[3]}]));
 
   const st = n => ({id:uid(), name:n});
   const FIN_STEPS = ["Prepare","Review – Accounting","Review – Asset Mgmt","Approve","Send to investors"];
@@ -394,14 +420,21 @@ function seedState(){
     if (!e){ e = {id:uid(), name:ent, assignments:[]}; entByName[ent] = e; entities.push(e); }
     const s = rt.steps;
     const isDev = type === "Development";
+    const R = ROLES[key(ent)] || {};
+    const DEV_MGR = {Will:"Will", Tanner:"Tanner", Patrick:"Patrick"};   // dev prep owner comes from the tracker
     const stepAssignees = {
-      [s[0].id]: isDev ? (U[resp]||null) : (U[acct]||null),
-      [s[1].id]: isDev ? U["VP of Development"] : U["Accounting Manager"],
-      [s[2].id]: isDev ? null : (U[resp]||null),
-      [s[3].id]: U["VP of Investments"],
-      [s[4].id]: U[sender]||null,
+      // 1 Prepare — the entity's accountant, or its development manager on dev reports
+      [s[0].id]: isDev ? (U[DEV_MGR[resp]] || null) : (U[R.acct] || null),
+      // 2 Review — accounting manager / controller, or the VP of Development on dev reports
+      [s[1].id]: isDev ? U["VP of Development"] : (U[R.review] || null),
+      // 3 Review — asset manager or DPM
+      [s[2].id]: U[R.asset] || null,
+      // 4 Approve — VP of Investments
+      [s[3].id]: U["Spencer Esau"],
+      // 5 Send — Operations Manager
+      [s[4].id]: U["Andrea Myers"],
     };
-    const fullNote = (isDev && acct ? `Financials: ${acct}. ` : "") + (note||"");
+    const fullNote = (isDev && R.acct ? `Financials: ${R.acct}. ` : "") + (note||"");
     const a = {id:uid(), reportTypeId:rt.id, frequency:freq, recipient:rcp, note:fullNote, stepAssignees};
     e.assignments.push(a);
     if (period){
@@ -429,9 +462,10 @@ function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catc
 /* Bring data saved before accounts existed up to date. */
 function migrate(){
   const ROLE_NAMES = ["Accounting Manager","VP of Investments","VP of Development"];
+  const ADMINS = ["West","Andrea","Westley Oxier","Andrea Myers"];
   (state.users||[]).forEach(u=>{
     if (!u.pin) u.pin = pinHash(DEFAULT_PIN);
-    if (!u.accessLevel) u.accessLevel = (u.name==="West"||u.name==="Andrea") ? "admin" : "member";
+    if (!u.accessLevel) u.accessLevel = ADMINS.includes(u.name) ? "admin" : "member";
     if (u.isRole === undefined) u.isRole = ROLE_NAMES.includes(u.name);
     if (u.isRole && !u.role) u.role = u.name;
   });
